@@ -77,7 +77,7 @@ YOUR COMPANY`;
 }
 
 /**
- * UNIQUE EXPORT FUNCTION (Unified for FP and TP with Xyne Support - Root Drive Version)
+ * UNIQUE EXPORT FUNCTION (Unified for FP and TP with Ticket Support - Root Drive Version)
  */
 function _dlpExportLogsToDrive(logArray) {
   const now = new Date();
@@ -114,8 +114,8 @@ function _dlpExportLogsToDrive(logArray) {
     file.moveTo(dateFolder); 
     
     sheet = ss.getSheets()[0];
-    // Added Xyne Ticket Column
-    sheet.appendRow(["Timestamp", "Thread ID", "Subject", "Internal Emails", "External Emails", "Outcome", "Xyne Ticket"]);
+    // Added Ticket Column
+    sheet.appendRow(["Timestamp", "Thread ID", "Subject", "Internal Emails", "External Emails", "Outcome", "Ticket Ticket"]);
     sheet.getRange("A1:G1").setFontWeight("bold");
     sheet.setColumnWidths(1, 7, 200); 
     console.log("📄 Created brand new sheet for today.");
@@ -137,7 +137,7 @@ function _dlpExportLogsToDrive(logArray) {
 
     if (line.includes("Thread ID: ")) {
       if (currentThread) parsedRows.push(currentThread); 
-      // Template: [ID, Subject, Internal, External, Outcome, Xyne]
+      // Template: [ID, Subject, Internal, External, Outcome, Ticket]
       currentThread = ["", "", "NONE", "NONE", "Processing...", "N/A"]; 
       currentThread[0] = line.split("Thread ID: ")[1].trim();
     }
@@ -180,12 +180,12 @@ function _dlpExportLogsToDrive(logArray) {
       if (line.includes("✓ Auto in-thread reply sent to L1 & L2.")) currentThread[4] = "TRUE POSITIVE (Escalated to L1/L2)";
       if (line.includes("No external emails detected in thread.")) currentThread[4] = "TRUE POSITIVE RUN (Skipped - No External)";
 
-      // Capture Xyne Ticket
-      if (line.includes("✓ Xyne Ticket Created: ")) {
-        currentThread[5] = line.split("✓ Xyne Ticket Created: ")[1].trim();
+      // Capture Ticket
+      if (line.includes("✓ Ticket Created: ")) {
+        currentThread[5] = line.split("✓ Ticket Created: ")[1].trim();
       }
-      if (line.includes("✗ Xyne Ticket Error: ")) {
-        currentThread[5] = "FAILED TO CREATE XYNE TICKET";
+      if (line.includes("✗ Ticket Error: ")) {
+        currentThread[5] = "FAILED TO CREATE TICKET";
       }
     }
   }

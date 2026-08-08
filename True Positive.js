@@ -1,7 +1,7 @@
-// --- XYNE CONFIGURATION ---
-// Channel for True Positive alerts. Override via script property XYNE_TP_CHANNEL_ID.
-const XYNE_APP_URL = "https://YOUR-APP-URL.example.com/APP_ID";
-const XYNE_CHANNEL_ID = PropertiesService.getScriptProperties().getProperty("XYNE_TP_CHANNEL_ID") || "cms8qrg54en09n285eujqgy84";
+// --- TICKET CONFIGURATION ---
+// Channel for True Positive alerts. Override via script property TICKET_TP_CHANNEL_ID.
+const TICKET_APP_URL = "https://YOUR-APP-URL.example.com/APP_ID";
+const TICKET_CHANNEL_ID = PropertiesService.getScriptProperties().getProperty("TICKET_TP_CHANNEL_ID") || "YOUR_TICKET_CHANNEL_ID";
 
 // Enable Gmail Advanced Service before running
 function base64UrlSafeEncode(rawString) {
@@ -88,7 +88,7 @@ YOUR COMPANY`;
 }
 
 /**
- * UNIQUE EXPORT FUNCTION (Unified for FP and TP with Xyne Support - Root Drive Version)
+ * UNIQUE EXPORT FUNCTION (Unified for FP and TP with Ticket Support - Root Drive Version)
  */
 function _dlpExportLogsToDrive(logArray) {
   const now = new Date();
@@ -125,8 +125,8 @@ function _dlpExportLogsToDrive(logArray) {
     file.moveTo(dateFolder); 
     
     sheet = ss.getSheets()[0];
-    // Added Xyne Ticket Column
-    sheet.appendRow(["Timestamp", "Thread ID", "Subject", "Internal Emails", "External Emails", "Outcome", "Xyne Ticket"]);
+    // Added Ticket Column
+    sheet.appendRow(["Timestamp", "Thread ID", "Subject", "Internal Emails", "External Emails", "Outcome", "Ticket Ticket"]);
     sheet.getRange("A1:G1").setFontWeight("bold");
     sheet.setColumnWidths(1, 7, 200); 
     console.log("📄 Created brand new sheet for today.");
@@ -148,7 +148,7 @@ function _dlpExportLogsToDrive(logArray) {
 
     if (line.includes("Thread ID: ")) {
       if (currentThread) parsedRows.push(currentThread); 
-      // Template: [ID, Subject, Internal, External, Outcome, Xyne]
+      // Template: [ID, Subject, Internal, External, Outcome, Ticket]
       currentThread = ["", "", "NONE", "NONE", "Processing...", "N/A"]; 
       currentThread[0] = line.split("Thread ID: ")[1].trim();
     }
@@ -191,14 +191,14 @@ function _dlpExportLogsToDrive(logArray) {
       if (line.includes("✓ Auto in-thread reply sent to L1 & L2.")) currentThread[4] = "TRUE POSITIVE (Escalated to L1/L2)";
       if (line.includes("No external emails detected in thread.")) currentThread[4] = "TRUE POSITIVE RUN (Skipped - No External)";
 
-      // Xyne ticket is captured below by the unified parser
+      // Ticket ticket is captured below by the unified parser
 
-      // Capture Xyne Ticket
-      if (line.includes("✓ Xyne Ticket Created: ")) {
-        currentThread[5] = line.split("✓ Xyne Ticket Created: ")[1].trim();
+      // Capture Ticket
+      if (line.includes("✓ Ticket Created: ")) {
+        currentThread[5] = line.split("✓ Ticket Created: ")[1].trim();
       }
-      if (line.includes("✗ Xyne Ticket Error: ")) {
-        currentThread[5] = "FAILED TO CREATE XYNE TICKET";
+      if (line.includes("✗ Ticket Error: ")) {
+        currentThread[5] = "FAILED TO CREATE TICKET";
       }
     }
   }
@@ -373,9 +373,9 @@ function detectTruePositiveAndNotify_CORE() {
 
         // Deduplicate external emails
         allExternalEmails = [...new Set(allExternalEmails)];
-// -------- XYNE TICKET GENERATION BLOCK --------
-        let xyneTicketUrl = "Xyne creation failed or skipped";
-        let xyneTicketId = "Ticket Creation Failed";
+// -------- TICKET TICKET GENERATION BLOCK --------
+        let ticketTicketUrl = "Ticket creation failed or skipped";
+        let ticketTicketId = "Ticket Creation Failed";
 
         try {
           const ruleName = thread.getFirstMessageSubject().replace("Rule triggered: ", "");
@@ -388,19 +388,19 @@ function detectTruePositiveAndNotify_CORE() {
             `Message Link:\n${messageLinks[0]}`;
 
           // Create the ticket in the dedicated True Positive channel
-          const ticket = createXyneTicketTP(ticketTitle, ticketDescription);
+          const ticket = createTicketTP(ticketTitle, ticketDescription);
 
-          xyneTicketId = ticket.xyneId; 
+          ticketTicketId = ticket.ticketId; 
           
           // Construct the web app deep-link for the TP channel
-          xyneTicketUrl = buildXyneTicketUrl(XYNE_CHANNEL_ID, ticket);
+          ticketTicketUrl = buildTicketUrl(TICKET_CHANNEL_ID, ticket);
           
-          LOG.push("✓ Xyne Ticket Created: " + xyneTicketId);
+          LOG.push("✓ Ticket Created: " + ticketTicketId);
         } catch (e) {
-          LOG.push("✗ Xyne Ticket Error: " + e.message);
-          xyneTicketUrl = "FAILED";
+          LOG.push("✗ Ticket Error: " + e.message);
+          ticketTicketUrl = "FAILED";
         }
-        // -------- END XYNE TICKET GENERATION BLOCK --------
+        // -------- END TICKET TICKET GENERATION BLOCK --------
 
         // SEND IN-THREAD REPLY IF NOT ALREADY SENT
         if (!alreadyReplied) {
@@ -419,8 +419,8 @@ function detectTruePositiveAndNotify_CORE() {
 
             "Initial assessment indicates this could be a potential True Positive.\n" +
             "We request you to review and confirm whether this communication is expected and appropriate.\n\n" +
-(xyneTicketUrl !== "FAILED" && xyneTicketUrl !== "Xyne creation failed or skipped"
-           ? `Tracking Reference:\n• ${xyneTicketUrl}\n\n`
+(ticketTicketUrl !== "FAILED" && ticketTicketUrl !== "Ticket creation failed or skipped"
+           ? `Tracking Reference:\n• ${ticketTicketUrl}\n\n`
            : ""
            ) + 
             "Next Steps:\n" +
@@ -482,17 +482,17 @@ function detectTruePositiveAndNotify_CORE() {
 
           "Reference Links:\n" +
           `${messageLinks.join("\n")}\n\n` +
-"Xyne Tracking:\n" +
-           (xyneTicketUrl !== "FAILED" && xyneTicketUrl !== "Xyne creation failed or skipped"
-           ? `• ${xyneTicketUrl}\n\n`
-           : "• Xyne ticket creation failed\n\n"
+"Ticket Tracking:\n" +
+           (ticketTicketUrl !== "FAILED" && ticketTicketUrl !== "Ticket creation failed or skipped"
+           ? `• ${ticketTicketUrl}\n\n`
+           : "• Ticket ticket creation failed\n\n"
            ) +
 
           "Required Actions:\n" +
           "• Validate whether the external communication is business-justified\n" +
           "• Check if any sensitive or regulated data was shared\n" +
           "• Review the email content using the reference links above\n" +
-          "• Update the Xyne ticket with investigation findings\n" +
+          "• Update the Ticket ticket with investigation findings\n" +
           "• Escalate immediately if any policy violation is identified\n\n" +
 
           "Notes:\n" +
@@ -511,9 +511,9 @@ function detectTruePositiveAndNotify_CORE() {
           );
         LOG.push("✓ Notification sent to L1 & L2 with ORIGINAL CONTENT block.");
 
-        // Post the structured (metadata-only) alert to the dedicated Xyne channel
+        // Post the structured (metadata-only) alert to the dedicated Ticket channel
         try {
-          const webhookResult = sendXyneChannelAlert({
+          const webhookResult = sendTicketAlert({
             title: "TRUE POSITIVE DETECTED",
             summary: "An email thread was flagged for interaction with external recipient(s). Potential True Positive — requires validation from the security team.",
             fields: [
@@ -521,12 +521,12 @@ function detectTruePositiveAndNotify_CORE() {
               { label: "External Emails", value: allExternalEmails.join(", ") },
               { label: "Detection Time", value: getFormattedTimestamp() }
             ],
-            ticketUrl: (xyneTicketUrl !== "FAILED" && xyneTicketUrl !== "Xyne creation failed or skipped") ? xyneTicketUrl : null
+            ticketUrl: (ticketTicketUrl !== "FAILED" && ticketTicketUrl !== "Ticket creation failed or skipped") ? ticketTicketUrl : null
           });
-          if (webhookResult.ok) LOG.push("✓ Xyne channel alert posted.");
-          else LOG.push("⚠️ Xyne channel alert failed: HTTP " + webhookResult.httpStatus + " | " + (webhookResult.response || ""));
+          if (webhookResult.ok) LOG.push("✓ Ticket channel alert posted.");
+          else LOG.push("⚠️ Ticket channel alert failed: HTTP " + webhookResult.httpStatus + " | " + (webhookResult.response || ""));
         } catch (webhookErr) {
-          LOG.push("⚠️ Xyne channel alert exception: " + webhookErr);
+          LOG.push("⚠️ Ticket channel alert exception: " + webhookErr);
         }
 
         // MARK ALL PROCESSED UNREAD MESSAGES AS READ

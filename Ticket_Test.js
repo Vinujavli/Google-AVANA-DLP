@@ -1,6 +1,6 @@
 /**
  * DIAGNOSTIC — posts the exact production alert payload to the webhook
- * and logs full request/response details so we can see why Xyne is
+ * and logs full request/response details so we can see why Ticket is
  * returning 400 invalid_payload.
  *
  * Run from the Apps Script editor manually.
@@ -32,12 +32,12 @@ function diagnoseWebhookPayload() {
           "*" + mrkdwn(opts.title) + "*\n\n" +
           mrkdwn(opts.summary) +
           (fieldLines ? "\n\n" + fieldLines : "") +
-          (opts.ticketUrl ? "\n\n*Xyne Ticket:*\n" + opts.ticketUrl : "")
+          (opts.ticketUrl ? "\n\n*Ticket Ticket:*\n" + opts.ticketUrl : "")
       }
     ]
   };
 
-  const url = PropertiesService.getScriptProperties().getProperty("XYNE_CHANNEL_WEBHOOK_URL") ||
+  const url = PropertiesService.getScriptProperties().getProperty("TICKET_CHANNEL_WEBHOOK_URL") ||
     "https://YOUR-WEBHOOK-URL-HERE.example.com/webhook";
 
   const oauthToken = ScriptApp.getOAuthToken();
@@ -69,7 +69,7 @@ function diagnoseWebhookPayload() {
  * Run from the Apps Script editor manually.
  */
 function diagnoseWebhookVariants() {
-  const url = PropertiesService.getScriptProperties().getProperty("XYNE_CHANNEL_WEBHOOK_URL") ||
+  const url = PropertiesService.getScriptProperties().getProperty("TICKET_CHANNEL_WEBHOOK_URL") ||
     "https://YOUR-WEBHOOK-URL-HERE.example.com/webhook";
   const oauthToken = ScriptApp.getOAuthToken();
 
@@ -114,18 +114,18 @@ function diagnoseWebhookVariants() {
   });
 }
 
-function createXyneTestTicket() {
+function createTicketTestTicket() {
 
   const token = PropertiesService
     .getScriptProperties()
-    .getProperty("XYNE_TOKEN");
+    .getProperty("TICKET_TOKEN");
 
   const payload = {
     title: "Avana Automation Test",
     description: "Testing ticket creation from Apps Script",
     projectId: "cmpmgs0wr0oig10jzvszx5x4s",
     boardId: "cmq86x24i01j9lfm05cykuvwr",
-    channelId: "cms8qrg54en09n285eujqgy84"
+    channelId: "YOUR_TICKET_CHANNEL_ID"
   };
 
   const options = {

@@ -1,63 +1,63 @@
 /**
- * XYNE AUTH — creates a real ticket with full audit logging.
+ * TICKET AUTH — creates a real ticket with full audit logging.
  *
  * Every call (success or failure) is appended to:
- *   Drive > AVANA Xyne Audit Logs > <yyyy> > <MMMM> > yyyy-MM-dd > "XYNE Ticket Audit yyyy-MM-dd"
+ *   Drive > AVANA Ticket Audit Logs > <yyyy> > <MMMM> > yyyy-MM-dd > "Ticket Audit yyyy-MM-dd"
  *
  * Config:
  *   Defaults below work out of the box. Any value can be overridden via
  *   Script Properties:
- *     XYNE_TOKEN              (required)
- *     XYNE_PROJECT_ID
- *     XYNE_BOARD_ID
- *     XYNE_CHANNEL_ID         (default/cyber-defence channel)
- *     XYNE_TP_CHANNEL_ID      (True Positive alerts channel)
+ *     TICKET_TOKEN         (required)
+ *     TICKET_PROJECT_ID
+ *     TICKET_BOARD_ID
+ *     TICKET_CHANNEL_ID      (default channel)
+ *     TICKET_TP_CHANNEL_ID   (True Positive alerts channel)
  */
 
-const XYNE_DEFAULTS = {
+const TICKET_DEFAULTS = {
   APP_URL: "https://YOUR-APP-URL.example.com/APP_ID",
   PROJECT_ID: "cmpmgs0wr0oig10jzvszx5x4s",
   BOARD_ID: "cmq86x24i01j9lfm05cykuvwr",
-  CHANNEL_ID: "cms8qrg54en09n285eujqgy84",   // dedicated AVANA/DLP channel
-  TP_CHANNEL_ID: "cms8qrg54en09n285eujqgy84" // True Positive alerts (same dedicated channel)
+  CHANNEL_ID: "YOUR_TICKET_CHANNEL_ID",   // dedicated AVANA/DLP channel
+  TP_CHANNEL_ID: "YOUR_TICKET_CHANNEL_ID" // True Positive alerts (same dedicated channel)
 };
 
 /**
  * Returns the channel ID TP alerts should go to.
- * Script property XYNE_TP_CHANNEL_ID overrides the built-in default.
+ * Script property TICKET_TP_CHANNEL_ID overrides the built-in default.
  */
-function getXyneTPChannelId() {
-  return PropertiesService.getScriptProperties().getProperty("XYNE_TP_CHANNEL_ID") ||
-    XYNE_DEFAULTS.TP_CHANNEL_ID;
+function getTicketChannelId() {
+  return PropertiesService.getScriptProperties().getProperty("TICKET_TP_CHANNEL_ID") ||
+    TICKET_DEFAULTS.TP_CHANNEL_ID;
 }
 
 /**
- * Builds the Xyne web app deep-link for a created ticket.
+ * Builds the Ticket web app deep-link for a created ticket.
  */
-function buildXyneTicketUrl(channelId, ticket) {
-  return XYNE_DEFAULTS.APP_URL + "/chat/dir/" + channelId + "/" +
+function buildTicketUrl(channelId, ticket) {
+  return TICKET_DEFAULTS.APP_URL + "/chat/dir/" + channelId + "/" +
     ticket.conversationId + "/" + ticket.messageId + "?selectedTab=details";
 }
 
-function createXyneTicket(title, description) {
-  return _xyneCreateTicketWithAudit_("createXyneTicket", title, description);
+function createTicket(title, description) {
+  return _createTicketWithAudit_("createTicket", title, description);
 }
 
 /**
- * Posts a message to the dedicated Xyne channel via webhook.
+ * Posts a message to the dedicated ticketing channel via webhook.
  * Authenticated with the script's Google OAuth token.
- * Set Script Property XYNE_CHANNEL_WEBHOOK_URL to override the default URL.
+ * Set Script Property TICKET_CHANNEL_WEBHOOK_URL to override the default URL.
  *
  * Uses Slack-style "blocks" + "attachments" (verified working via format probe).
  */
-function sendXyneChannelMessage(text, title) {
-  return _xynePostToWebhook_({
+function sendTicketChannelMessage(text, title) {
+  return _postToTicketWebhook_({
     text: (title ? "*" + title + "*\n" : "") + text
   });
 }
 
 /**
- * Posts a Slack-style rich alert to the dedicated Xyne channel.
+ * Posts a rich alert to the ticketing channel.
  *
  * Renders exactly ONE heading (the title). Body contains only the summary
  * and the caller-supplied bullet fields. No Reference Links section, no
@@ -67,10 +67,10 @@ function sendXyneChannelMessage(text, title) {
  * @param {string} opts.title        Alert headline, e.g. "TRUE POSITIVE DETECTED"
  * @param {string} opts.summary      One-line description (mrkdwn supported)
  * @param {Array<{label:string,value:string}>} opts.fields  Bullet fields
- * @param {string}  opts.ticketUrl   Xyne ticket deep-link (optional)
+ * @param {string}  opts.ticketUrl   Ticket deep-link (optional)
  * @param {string}  opts.color       Attachment bar color (default: red #d93025)
  */
-function sendXyneChannelAlert(opts) {
+function sendTicketAlert(opts) {
   const mrkdwn = (s) => (s == null ? "" : String(s));
 
   const fieldLines = (opts.fields || [])
@@ -86,23 +86,23 @@ function sendXyneChannelAlert(opts) {
           "*" + mrkdwn(opts.title) + "*\n\n" +
           mrkdwn(opts.summary) +
           (fieldLines ? "\n\n" + fieldLines : "") +
-          (opts.ticketUrl ? "\n\n*Xyne Ticket:*\n" + opts.ticketUrl : "")
+          (opts.ticketUrl ? "\n\n*Ticket Ticket:*\n" + opts.ticketUrl : "")
       }
     ]
   };
 
-  return _xynePostToWebhook_(payload);
+  return _postToTicketWebhook_(payload);
 }
 
 /**
  * Low-level webhook POST with shared error handling.
  */
-function _xynePostToWebhook_(payloadBody) {
-  const webhookUrl = (PropertiesService.getScriptProperties().getProperty("XYNE_CHANNEL_WEBHOOK_URL") ||
+function _postToTicketWebhook_(payloadBody) {
+  const webhookUrl = (PropertiesService.getScriptProperties().getProperty("TICKET_CHANNEL_WEBHOOK_URL") ||
     "https://YOUR-WEBHOOK-URL-HERE.example.com/webhook").trim();
 
   if (!webhookUrl) {
-    console.log("Xyne channel webhook: no URL configured, skipping.");
+    console.log("Ticket channel webhook: no URL configured, skipping.");
     return { ok: false, skipped: true };
   }
 
@@ -110,7 +110,7 @@ function _xynePostToWebhook_(payloadBody) {
   try {
     oauthToken = ScriptApp.getOAuthToken();
   } catch (e) {
-    console.log("Xyne channel webhook: ScriptApp.getOAuthToken failed: " + e);
+    console.log("Ticket channel webhook: ScriptApp.getOAuthToken failed: " + e);
     return { ok: false, httpStatus: "", response: "OAuth token failure: " + e };
   }
 
@@ -126,7 +126,7 @@ function _xynePostToWebhook_(payloadBody) {
     const resp = UrlFetchApp.fetch(webhookUrl, options);
     return { ok: [200, 201, 202, 204].indexOf(resp.getResponseCode()) !== -1, httpStatus: resp.getResponseCode(), response: resp.getContentText() };
   } catch (e) {
-    console.log("Xyne channel webhook: fetch failed: " + e);
+    console.log("Ticket channel webhook: fetch failed: " + e);
     return { ok: false, httpStatus: "ERR", response: String(e) };
   }
 }
@@ -134,11 +134,11 @@ function _xynePostToWebhook_(payloadBody) {
 /**
  * Creates a ticket in the dedicated True Positive channel.
  */
-function createXyneTicketTP(title, description) {
-  return _xyneCreateTicketWithAudit_("createXyneTicketTP", title, description, getXyneTPChannelId());
+function createTicketTP(title, description) {
+  return _createTicketWithAudit_("createTicketTP", title, description, getTicketChannelId());
 }
 
-function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverride) {
+function _createTicketWithAudit_(caller, title, description, channelIdOverride) {
   const startedAt = new Date();
   const timestamp = Utilities.formatDate(startedAt, Session.getScriptTimeZone(), "yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
   const durationMs = () => (new Date().getTime() - startedAt.getTime());
@@ -146,14 +146,14 @@ function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverri
   const log = (entry) => {
     const row = Object.assign({ caller: caller, title: title, timestamp: timestamp }, entry);
     console.log(JSON.stringify(row));
-    _xyneWriteAuditRow_([
+    _ticketWriteAuditRow_([
       timestamp,
       caller,
       title,
       row.channelId || "",
       row.outcome || "",
       row.httpStatus || "",
-      row.xyneId || "",
+      row.ticketId || "",
       row.ticketId || "",
       row.error || "",
       row.rawResponse || "",
@@ -163,22 +163,22 @@ function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverri
 
   const props = PropertiesService.getScriptProperties();
 
-  const token = props.getProperty("XYNE_TOKEN");
-  const projectId = props.getProperty("XYNE_PROJECT_ID") || XYNE_DEFAULTS.PROJECT_ID;
-  const boardId = props.getProperty("XYNE_BOARD_ID") || XYNE_DEFAULTS.BOARD_ID;
+  const token = props.getProperty("TICKET_TOKEN");
+  const projectId = props.getProperty("TICKET_PROJECT_ID") || TICKET_DEFAULTS.PROJECT_ID;
+  const boardId = props.getProperty("TICKET_BOARD_ID") || TICKET_DEFAULTS.BOARD_ID;
   const channelId = channelIdOverride ||
-    props.getProperty("XYNE_CHANNEL_ID") ||
-    XYNE_DEFAULTS.CHANNEL_ID;
+    props.getProperty("TICKET_CHANNEL_ID") ||
+    TICKET_DEFAULTS.CHANNEL_ID;
 
   // Validate config up-front
   const missing = [];
-  if (!token) missing.push("XYNE_TOKEN");
-  if (!projectId) missing.push("XYNE_PROJECT_ID");
-  if (!boardId) missing.push("XYNE_BOARD_ID");
-  if (!channelId) missing.push("XYNE_CHANNEL_ID or XYNE_DEFAULT_CHANNEL_ID");
+  if (!token) missing.push("TICKET_TOKEN");
+  if (!projectId) missing.push("TICKET_PROJECT_ID");
+  if (!boardId) missing.push("TICKET_BOARD_ID");
+  if (!channelId) missing.push("TICKET_CHANNEL_ID or TICKET_DEFAULT_CHANNEL_ID");
 
   if (missing.length > 0) {
-    const errMsg = "Xyne not configured. Missing script properties: " + missing.join(", ");
+    const errMsg = "Ticket not configured. Missing script properties: " + missing.join(", ");
     log({ outcome: "FAIL", error: errMsg, durationMs: durationMs() });
     throw new Error(errMsg);
   }
@@ -224,7 +224,7 @@ function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverri
       error: fetchErr.toString(),
       durationMs: durationMs()
     });
-    throw new Error("Xyne Ticket Creation Failed: network error - " + fetchErr.toString());
+    throw new Error("Ticket Ticket Creation Failed: network error - " + fetchErr.toString());
   }
 
   if (responseCode !== 201) {
@@ -236,7 +236,7 @@ function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverri
       error: "HTTP " + responseCode,
       durationMs: durationMs()
     });
-    throw new Error("Xyne Ticket Creation Failed (HTTP " + responseCode + "): " + responseBody);
+    throw new Error("Ticket Ticket Creation Failed (HTTP " + responseCode + "): " + responseBody);
   }
 
   let data;
@@ -251,11 +251,11 @@ function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverri
       error: "Invalid JSON - " + parseErr.toString(),
       durationMs: durationMs()
     });
-    throw new Error("Xyne returned invalid JSON: " + parseErr.toString());
+    throw new Error("Ticket returned invalid JSON: " + parseErr.toString());
   }
 
   const ticket = {
-    xyneId: data.xyneId,
+    ticketId: data.ticketId,
     ticketId: data.ticketId,
     conversationId: data.conversationId,
     messageId: data.messageId
@@ -265,7 +265,7 @@ function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverri
     outcome: "SUCCESS",
     channelId: channelId,
     httpStatus: responseCode,
-    xyneId: ticket.xyneId,
+    ticketId: ticket.ticketId,
     ticketId: ticket.ticketId,
     conversationId: ticket.conversationId,
     messageId: ticket.messageId,
@@ -276,9 +276,9 @@ function _xyneCreateTicketWithAudit_(caller, title, description, channelIdOverri
 }
 
 /**
- * Audit row writer. Column order matches _XYNE_AUDIT_HEADERS_.
+ * Audit row writer. Column order matches _TICKET_AUDIT_HEADERS_.
  */
-function _xyneWriteAuditRow_(row) {
+function _ticketWriteAuditRow_(row) {
   try {
     const now = new Date();
     const timeZone = Session.getScriptTimeZone();
@@ -286,12 +286,12 @@ function _xyneWriteAuditRow_(row) {
     const month = Utilities.formatDate(now, timeZone, "MMMM");
     const dateString = Utilities.formatDate(now, timeZone, "yyyy-MM-dd");
 
-    const rootFolder = _dlpUniqueGetFolder(DriveApp.getRootFolder(), "AVANA Xyne Audit Logs");
+    const rootFolder = _dlpUniqueGetFolder(DriveApp.getRootFolder(), "AVANA Ticket Audit Logs");
     const yearFolder = _dlpUniqueGetFolder(rootFolder, year);
     const monthFolder = _dlpUniqueGetFolder(yearFolder, month);
     const dateFolder = _dlpUniqueGetFolder(monthFolder, dateString);
 
-    const fileName = "XYNE Ticket Audit " + dateString;
+    const fileName = "TICKET Ticket Audit " + dateString;
     const files = dateFolder.getFilesByName(fileName);
     let ss, sheet;
 
@@ -304,7 +304,7 @@ function _xyneWriteAuditRow_(row) {
       sheet = ss.getSheets()[0];
       sheet.appendRow([
         "Timestamp", "Caller", "Title", "Channel ID", "Outcome", "HTTP Status",
-        "Xyne ID", "Ticket ID", "Error", "Raw Response", "Duration (ms)"
+        "Ticket ID", "Ticket ID", "Error", "Raw Response", "Duration (ms)"
       ]);
       sheet.getRange("A1:K1").setFontWeight("bold");
       sheet.setColumnWidths(1, 11, 180);
@@ -312,6 +312,6 @@ function _xyneWriteAuditRow_(row) {
 
     sheet.appendRow(row);
   } catch (sheetErr) {
-    console.error("XYNE AUDIT WRITE FAILED: " + sheetErr);
+    console.error("TICKET AUDIT WRITE FAILED: " + sheetErr);
   }
 }
