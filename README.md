@@ -4,7 +4,7 @@ Unified DLP (Data Loss Prevention) Workflow Automation for CyberDefence Operatio
 
 ## Overview
 
-AVANA orchestrates your organization's DLP incident triage through Gmail and Google Workspace Admin audit logs, with built-in routing to JIRA and Xyne for CyberDefence operations.
+AVANA orchestrates your organization's DLP incident triage through Gmail and Google Workspace Admin audit logs, with routing to Xyne for CyberDefence operations.
 
 ### Key Capabilities
 
@@ -15,7 +15,7 @@ AVANA orchestrates your organization's DLP incident triage through Gmail and Goo
 | Multi-Channel Alerts | Notifies via Email + Xyne real-time webhooks |
 | Internal Domain Allowlist | Handles intra-org mail with a configurable whitelist |
 | Daily & Weekly Reporting | Auto-generates summary digests for CyberDefence leadership |
-| JIRA Integration | Validates tickets against Atlassian Cloud |
+| Xyne Integration | Creates SOC tickets on Xyne via API |
 
 ## Architecture
 
@@ -30,8 +30,7 @@ Gmail DLP Alert
 +---------------------------------+
     |
     +---> Email alerts  (TP/FP)
-    +---> Xyne webhooks (real-time channel)
-    +---> JIRA tickets  (Atlassian Cloud)
+    +---> Xyne webhooks (real-time channel + ticket creation)
     +---> Daily/Weekly digests
 ```
 
@@ -42,8 +41,7 @@ Gmail DLP Alert
 ├── False Positive.js        # FP filtering & auto-closure
 ├── Daily_report.js          # Daily summary digest automation
 ├── Weekly_report.js         # Weekly summary digest automation
-├── JIRA_Auth.js             # JIRA Cloud auth helper
-├── XYNE_AUTH.js             # Xyne webhook integration
+├── XYNE_AUTH.js             # Xyne webhook & ticket creation
 ├── XYNE_Test.js             # Xyne diagnostics suite
 ├── appsscript.json          # Apps Script manifest
 └── .clasp.json              # Clasp project mapping
@@ -56,7 +54,6 @@ Gmail DLP Alert
 - Google Workspace (Gmail + Admin SDK) with CyberDefence mailbox
 - [clasp](https://github.com/google/clasp) installed: `npm i -g @google/clasp`
 - Xyne instance with a dedicated channel & webhook URL
-- JIRA Cloud (Atlassian) tenant
 
 ### 1. Clone & configure
 
@@ -82,7 +79,6 @@ In your Apps Script project, go to **Project Settings → Script Properties**:
 
 | Property | Value |
 |---|---|
-| `NEW_TOKEN` | JIRA Personal API Token |
 | `XYNE_TOKEN` | Xyne API token |
 | `XYNE_CHANNEL_WEBHOOK_URL` | Xyne channel webhook URL |
 

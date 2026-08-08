@@ -88,7 +88,7 @@ YOUR COMPANY`;
 }
 
 /**
- * UNIQUE EXPORT FUNCTION (Unified for FP and TP with Jira Support - Root Drive Version)
+ * UNIQUE EXPORT FUNCTION (Unified for FP and TP with Xyne Support - Root Drive Version)
  */
 function _dlpExportLogsToDrive(logArray) {
   const now = new Date();
@@ -125,8 +125,8 @@ function _dlpExportLogsToDrive(logArray) {
     file.moveTo(dateFolder); 
     
     sheet = ss.getSheets()[0];
-    // Added Jira Ticket Column
-    sheet.appendRow(["Timestamp", "Thread ID", "Subject", "Internal Emails", "External Emails", "Outcome", "Jira Ticket"]);
+    // Added Xyne Ticket Column
+    sheet.appendRow(["Timestamp", "Thread ID", "Subject", "Internal Emails", "External Emails", "Outcome", "Xyne Ticket"]);
     sheet.getRange("A1:G1").setFontWeight("bold");
     sheet.setColumnWidths(1, 7, 200); 
     console.log("📄 Created brand new sheet for today.");
@@ -148,7 +148,7 @@ function _dlpExportLogsToDrive(logArray) {
 
     if (line.includes("Thread ID: ")) {
       if (currentThread) parsedRows.push(currentThread); 
-      // Template: [ID, Subject, Internal, External, Outcome, Jira]
+      // Template: [ID, Subject, Internal, External, Outcome, Xyne]
       currentThread = ["", "", "NONE", "NONE", "Processing...", "N/A"]; 
       currentThread[0] = line.split("Thread ID: ")[1].trim();
     }
@@ -191,13 +191,7 @@ function _dlpExportLogsToDrive(logArray) {
       if (line.includes("✓ Auto in-thread reply sent to L1 & L2.")) currentThread[4] = "TRUE POSITIVE (Escalated to L1/L2)";
       if (line.includes("No external emails detected in thread.")) currentThread[4] = "TRUE POSITIVE RUN (Skipped - No External)";
 
-      /* // Capture Jira Ticket
-      if (line.includes("Jira Ticket Created: ")) {
-        currentThread[5] = line.split("Jira Ticket Created: ")[1].trim();
-      }
-      if (line.includes("✗ Jira error: ")) {
-        currentThread[5] = "FAILED TO CREATE TICKET";
-      } */
+      // Xyne ticket is captured below by the unified parser
 
       // Capture Xyne Ticket
       if (line.includes("✓ Xyne Ticket Created: ")) {
@@ -379,48 +373,7 @@ function detectTruePositiveAndNotify_CORE() {
 
         // Deduplicate external emails
         allExternalEmails = [...new Set(allExternalEmails)];
-
-        /* // -------- JIRA BLOCK (UNCHANGED) --------
-        let jiraTicketUrl = "Jira creation failed or skipped";
-        try {
-          const ruleName = thread.getFirstMessageSubject().replace("Rule triggered: ", "");
-          const jiraSummary = `JIRA AVANA DLP Alert: ${ruleName}`;
-          const jiraDescText =
-            `Auto-generated from AVANA DLP Monitoring\n\n` +
-
-            `Summary:\n` +
-            `This alert was triggered due to detection of external recipient(s) in an email thread.\n` +
-            `Initial analysis indicates this could be a potential True Positive and requires validation.\n\n` +
-
-            `Alert Details:\n` +
-            `• Rule Triggered : ${ruleName}\n` +
-            `• Detection Time: ${getFormattedTimestamp()}\n` +
-            `• Severity      : Medium\n\n` +
-
-            `External Recipients:\n` +
-            `${allExternalEmails.join(", ")}\n\n` +
-
-            `Reference:\n` +
-            `${messageLinks.join("\n")}\n\n` +
-
-            `Investigation Required:\n` +
-            `• Verify if the external communication was intended\n` +
-            `• Check if any sensitive data was shared\n` +
-            `• Confirm if this activity aligns with business requirements\n\n` +
-
-            `Notes:\n` +
-            `This is an automated alert and not a final classification.\n` +
-            `Kindly validate before taking action.\n`;
-
-          const jiraKey = createJiraTicket(jiraSummary, jiraDescText);
-          if (jiraKey) jiraTicketUrl = `${JIRA_URL}/browse/${jiraKey}`;
-          LOG.push("Jira Ticket Created: " + jiraKey);
-        } catch (e) {
-          LOG.push("✗ Jira error: " + e.message);
-        }
-        // -------- END JIRA BLOCK -------- */
-
-        // -------- XYNE TICKET GENERATION BLOCK --------
+// -------- XYNE TICKET GENERATION BLOCK --------
         let xyneTicketUrl = "Xyne creation failed or skipped";
         let xyneTicketId = "Ticket Creation Failed";
 
@@ -466,12 +419,7 @@ function detectTruePositiveAndNotify_CORE() {
 
             "Initial assessment indicates this could be a potential True Positive.\n" +
             "We request you to review and confirm whether this communication is expected and appropriate.\n\n" +
-
-            /* (jiraTicketUrl !== "FAILED"
-              ? `Tracking Reference:\n• ${jiraTicketUrl}\n\n`
-              : ""
-            ) + */
-            (xyneTicketUrl !== "FAILED" && xyneTicketUrl !== "Xyne creation failed or skipped"
+(xyneTicketUrl !== "FAILED" && xyneTicketUrl !== "Xyne creation failed or skipped"
            ? `Tracking Reference:\n• ${xyneTicketUrl}\n\n`
            : ""
            ) + 
@@ -534,20 +482,7 @@ function detectTruePositiveAndNotify_CORE() {
 
           "Reference Links:\n" +
           `${messageLinks.join("\n")}\n\n` +
-
-          /* "Jira Tracking:\n" +
-          (jiraTicketUrl !== "FAILED"
-            ? `• ${jiraTicketUrl}\n\n`
-            : "• Jira ticket creation failed\n\n"
-          ) +
-
-          "Required Actions:\n" +
-          "• Validate whether the external communication is business-justified\n" +
-          "• Check if any sensitive or regulated data was shared\n" +
-          "• Review the email content using the reference links above\n" +
-          "• Update the Jira ticket with investigation findings\n" +
-          "• Escalate immediately if any policy violation is identified\n\n" + */
-          "Xyne Tracking:\n" +
+"Xyne Tracking:\n" +
            (xyneTicketUrl !== "FAILED" && xyneTicketUrl !== "Xyne creation failed or skipped"
            ? `• ${xyneTicketUrl}\n\n`
            : "• Xyne ticket creation failed\n\n"
