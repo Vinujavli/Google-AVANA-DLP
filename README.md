@@ -19,20 +19,11 @@ AVANA orchestrates your organization's DLP incident triage through Gmail and Goo
 
 ## Architecture
 
-```
-Gmail DLP Alert
-    |
-    v
-+---------------------------------+
-|   AVANA Automation Engine       |
-| (Google Apps Script)            |
-| - detect() | classify() | report|
-+---------------------------------+
-    |
-    +---> Email alerts  (TP/FP)
-    +---> Ticketing webhooks (real-time channel + ticket creation)
-    +---> Daily/Weekly digests
-```
+![AVANA Architecture](docs/diagrams/Architecture.png)
+
+## Sequence Diagram
+
+![AVANA Sequence Diagram](docs/diagrams/Sequence%20Diagram.png)
 
 ## Project Structure
 
@@ -44,7 +35,11 @@ Gmail DLP Alert
 ├── Ticket_Auth.js           # Ticketing system auth, webhook POST & ticket creation
 ├── Ticket_Test.js           # Ticketing diagnostics suite
 ├── appsscript.json          # Apps Script manifest
-└── .clasp.json              # Clasp project mapping
+├── .clasp.json              # Clasp project mapping
+└── docs/
+    └── diagrams/
+        ├── Architecture.png      # System architecture diagram
+        └── Sequence Diagram.png  # End-to-end workflow sequence diagram
 ```
 
 ## Setup
